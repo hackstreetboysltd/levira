@@ -31,11 +31,10 @@ else
   git commit -m "$1"
 fi
 
-echo ">> Pushing to origin main (HTTPS / hackstreetboysltd via gh)..."
+echo ">> Pushing to origin main (hackstreetboysltd deploy key)..."
 git push origin main
 
-# GitHub→Vercel auto-deploy requires the Vercel GitHub App to include this repo.
-# Until that link exists, deploy production from this machine after every push.
+# Vercel GitHub App does not include this repo yet — deploy from CLI after push.
 echo ">> Deploying production to Vercel..."
 vercel --prod --yes
 
