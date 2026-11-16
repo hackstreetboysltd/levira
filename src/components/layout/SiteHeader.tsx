@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Menu, X } from "lucide-react";
 import { nav, site } from "@/content/levira";
@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastY = useRef(0);
   const reduce = useReducedMotion();
   const isImmersive = pathname === "/";
   const showBrand = !isImmersive;
@@ -28,6 +30,33 @@ export function SiteHeader() {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      setHidden(false);
+      return;
+    }
+
+    lastY.current = window.scrollY;
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastY.current;
+
+      if (y < 8) {
+        setHidden(false);
+      } else if (delta > 6) {
+        setHidden(true);
+      } else if (delta < -6) {
+        setHidden(false);
+      }
+
+      lastY.current = y;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [open, pathname]);
+
   return (
     <>
       <header
@@ -36,6 +65,10 @@ export function SiteHeader() {
           isImmersive
             ? "fixed inset-x-0 top-0"
             : "sticky top-0",
+          reduce
+            ? undefined
+            : "transition-transform duration-300 ease-out",
+          hidden && !open ? "-translate-y-full" : "translate-y-0",
         )}
       >
         <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-3 safe-px py-4 sm:h-16 sm:grid-cols-[1fr_auto_1fr] sm:px-6 sm:py-0">
