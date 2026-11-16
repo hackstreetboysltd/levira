@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -34,8 +28,8 @@ const SLIDES: PartnerSlide[] = partnerGroups.flatMap((group) =>
   })),
 );
 
-/** Fixed coverflow geometry — same angles at every width. */
-const COVERFLOW = {
+/** Desktop coverflow — room for a five-card fan. */
+const COVERFLOW_WIDE = {
   rotate: 38,
   depth: 220,
   stretch: -60,
@@ -44,14 +38,19 @@ const COVERFLOW = {
   slideShadows: false,
 } as const;
 
-/** Five cards + tip slivers (desktop). */
-const STAGE_DESIGN_WIDTH_WIDE = 1280;
-
 /**
- * Three readable cards + slim ±2 peeks pinned to the left/right edges.
- * Tighter crop → larger scale → readable type below 600px.
+ * Mobile coverflow — native width (no parent CSS scale).
+ * Parent `transform: scale()` flattens Swiper 3D on iOS Safari.
+ * Milder depth/rotate keeps ±1 neighbors readable in ~390px.
  */
-const STAGE_DESIGN_WIDTH_NARROW = 920;
+const COVERFLOW_NARROW = {
+  rotate: 22,
+  depth: 90,
+  stretch: -8,
+  scale: 0.88,
+  modifier: 1,
+  slideShadows: false,
+} as const;
 
 const NARROW_QUERY = "(max-width: 599px)";
 
@@ -73,42 +72,13 @@ export function PartnerCoverflow() {
   const reduce = useReducedMotion();
   const isNarrow = useNarrowViewport();
   const swiperRef = useRef<SwiperInstance | null>(null);
-  const frameRef = useRef<HTMLDivElement | null>(null);
-  const stageRef = useRef<HTMLDivElement | null>(null);
   const descriptionRef = useRef<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [scale, setScale] = useState(1);
-  const [stageHeight, setStageHeight] = useState<number | undefined>(undefined);
 
   const active = SLIDES[activeIndex] ?? SLIDES[0];
-  const canLoop = !reduce && SLIDES.length >= 4;
-  const useCoverflow = !reduce;
-  const designWidth = isNarrow
-    ? STAGE_DESIGN_WIDTH_NARROW
-    : STAGE_DESIGN_WIDTH_WIDE;
-
-  const syncScale = useCallback(() => {
-    const frame = frameRef.current;
-    const stage = stageRef.current;
-    if (!frame || !stage) return;
-
-    const nextScale = Math.min(1, frame.clientWidth / designWidth);
-    setScale(nextScale);
-    setStageHeight(stage.scrollHeight * nextScale);
-  }, [designWidth]);
-
-  useLayoutEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-
-    syncScale();
-
-    const ro = new ResizeObserver(() => {
-      syncScale();
-    });
-    ro.observe(frame);
-    return () => ro.disconnect();
-  }, [syncScale, useCoverflow, designWidth]);
+  // Coverflow is layout, not decoration — keep it with reduced motion; only zero speed.
+  const canLoop = SLIDES.length >= 4;
+  const coverflow = isNarrow ? COVERFLOW_NARROW : COVERFLOW_WIDE;
 
   const goPrev = useCallback(() => {
     swiperRef.current?.slidePrev();
@@ -125,23 +95,19 @@ export function PartnerCoverflow() {
     });
   }, [reduce]);
 
-  const goToSlide = useCallback(
-    (realIndex: number) => {
-      const swiper = swiperRef.current;
-      if (!swiper || realIndex === swiper.realIndex) return;
-      if (swiper.params.loop) {
-        swiper.slideToLoop(realIndex);
-      } else {
-        swiper.slideTo(realIndex);
-      }
-    },
-    [],
-  );
+  const goToSlide = useCallback((realIndex: number) => {
+    const swiper = swiperRef.current;
+    if (!swiper || realIndex === swiper.realIndex) return;
+    if (swiper.params.loop) {
+      swiper.slideToLoop(realIndex);
+    } else {
+      swiper.slideTo(realIndex);
+    }
+  }, []);
 
   const selectSlide = useCallback(
     (realIndex: number) => {
       goToSlide(realIndex);
-      // Defer so the description for the newly selected slide is in the DOM.
       requestAnimationFrame(() => {
         requestAnimationFrame(scrollToDescription);
       });
@@ -152,84 +118,77 @@ export function PartnerCoverflow() {
   return (
     <div className="w-full">
       <div
-        ref={frameRef}
-        className="partner-coverflow relative w-full overflow-hidden"
-        style={{ height: stageHeight }}
+        className="partner-coverflow relative w-full overflow-hidden py-2"
+        style={{ perspective: "1200px" }}
       >
-        <div
-          ref={stageRef}
-          className="absolute top-0 left-1/2 py-2"
-          style={{
-            width: designWidth,
-            transform: `translateX(-50%) scale(${scale})`,
-            transformOrigin: "top center",
-            transformStyle: useCoverflow ? "preserve-3d" : undefined,
-            ...(useCoverflow ? { perspective: "1200px" } : null),
+        <Swiper
+          key={isNarrow ? "narrow" : "wide"}
+          modules={[EffectCoverflow, Keyboard, A11y]}
+          effect="coverflow"
+          grabCursor
+          centeredSlides
+          slideToClickedSlide
+          slidesPerView="auto"
+          loop={canLoop}
+          speed={reduce ? 0 : 450}
+          keyboard={{ enabled: true }}
+          a11y={{
+            enabled: true,
+            prevSlideMessage: "Previous partner",
+            nextSlideMessage: "Next partner",
           }}
+          coverflowEffect={{ ...coverflow }}
+          initialSlide={0}
+          onSwiper={(instance) => {
+            swiperRef.current = instance;
+            setActiveIndex(instance.realIndex);
+          }}
+          onSlideChange={(instance) => {
+            setActiveIndex(instance.realIndex);
+          }}
+          className="!overflow-visible px-4 sm:px-6"
         >
-          <Swiper
-            key={`${useCoverflow ? "3d" : "flat"}-${designWidth}`}
-            modules={[EffectCoverflow, Keyboard, A11y]}
-            effect={useCoverflow ? "coverflow" : "slide"}
-            grabCursor
-            centeredSlides
-            slideToClickedSlide
-            slidesPerView="auto"
-            loop={canLoop}
-            speed={reduce ? 0 : 450}
-            keyboard={{ enabled: true }}
-            a11y={{
-              enabled: true,
-              prevSlideMessage: "Previous partner",
-              nextSlideMessage: "Next partner",
-            }}
-            coverflowEffect={useCoverflow ? { ...COVERFLOW } : undefined}
-            initialSlide={0}
-            onSwiper={(instance) => {
-              swiperRef.current = instance;
-              setActiveIndex(instance.realIndex);
-              requestAnimationFrame(syncScale);
-            }}
-            onSlideChange={(instance) => {
-              setActiveIndex(instance.realIndex);
-            }}
-            className="!overflow-visible px-6"
-          >
-            {SLIDES.map((slide, index) => (
-              <SwiperSlide key={slide.id} className="!h-auto !w-[17rem]">
-                {({ isActive }) => (
-                  <article
-                    className={cn(
-                      "flex min-h-[16.5rem] cursor-pointer flex-col items-center justify-center rounded-2xl border bg-deep px-7 py-8 text-center text-mist transition-[border-color,box-shadow]",
-                      isActive
-                        ? "border-gold shadow-[0_0_0_1px_rgba(184,137,61,0.35)]"
-                        : "border-deep/40 opacity-90 hover:border-cyan/35 hover:opacity-100",
-                    )}
-                    aria-current={isActive ? "true" : undefined}
-                    aria-label={`Show ${slide.name}, ${slide.groupLabel}`}
-                    onClick={() => selectSlide(index)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        selectSlide(index);
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <p className="font-display text-[clamp(1.4rem,0.2rem+2.4vw,1.9rem)] leading-[1.1] font-bold tracking-[-0.03em] text-balance">
-                      {slide.name}
-                    </p>
-                    <div
-                      className="mt-5 h-px w-12 bg-cyan/55"
-                      aria-hidden="true"
-                    />
-                  </article>
-                )}
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        </div>
+          {SLIDES.map((slide, index) => (
+            <SwiperSlide
+              key={slide.id}
+              className={cn(
+                "!h-auto",
+                isNarrow ? "!w-[min(13.25rem,64vw)]" : "!w-[17rem]",
+              )}
+            >
+              {({ isActive }) => (
+                <article
+                  className={cn(
+                    "flex cursor-pointer flex-col items-center justify-center rounded-2xl border bg-deep px-5 py-6 text-center text-mist transition-[border-color,box-shadow] sm:px-7 sm:py-8",
+                    isNarrow ? "min-h-[13.25rem]" : "min-h-[16.5rem]",
+                    isActive
+                      ? "border-gold shadow-[0_0_0_1px_rgba(184,137,61,0.35)]"
+                      : "border-deep/40 opacity-90 hover:border-cyan/35 hover:opacity-100",
+                  )}
+                  aria-current={isActive ? "true" : undefined}
+                  aria-label={`Show ${slide.name}, ${slide.groupLabel}`}
+                  onClick={() => selectSlide(index)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      selectSlide(index);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <p className="font-display text-[clamp(1.25rem,0.4rem+3.2vw,1.9rem)] leading-[1.1] font-bold tracking-[-0.03em] text-balance">
+                    {slide.name}
+                  </p>
+                  <div
+                    className="mt-5 h-px w-12 bg-cyan/55"
+                    aria-hidden="true"
+                  />
+                </article>
+              )}
+            </SwiperSlide>
+          ))}
+        </Swiper>
       </div>
 
       <div className="mx-auto mt-6 flex items-center justify-center gap-4 px-4 safe-px sm:mt-10 sm:gap-5 sm:px-6">
