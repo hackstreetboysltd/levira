@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  // Hide the Next.js DevTools on-screen indicator (e.g. "Cache disabled")
+  devIndicators: false,
   turbopack: {
     rules: {
       "*.css": {
