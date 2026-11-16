@@ -2,26 +2,44 @@
 
 import { useCallback, useRef, useState } from "react";
 import {
-  AnimatePresence,
-  motion,
   useMotionValueEvent,
   useReducedMotion,
   useScroll,
+  useSpring,
+  useTransform,
+  type MotionValue,
 } from "motion/react";
 import { AssignmentArc } from "@/components/sections/about/AssignmentArc";
-import {
-  AboutChapter,
-  CHAPTER_TONE_HEX,
-} from "@/components/sections/about/AboutChapter";
+import { AboutChapter } from "@/components/sections/about/AboutChapter";
+import { ArcAtmosphere } from "@/components/sections/about/ArcAtmosphere";
+import { ArcScrollSvg } from "@/components/sections/about/ArcScrollSvg";
 import { about } from "@/content/levira";
 
 const CHAPTER_TONES = ["mist", "deep", "paper"] as const;
+
+/** Progress windows → opacity for each chapter (overlap for crossfade). */
+const OPACITY_WINDOWS: [number, number, number, number][] = [
+  [0, 0, 0.28, 0.38],
+  [0.28, 0.38, 0.62, 0.72],
+  [0.62, 0.72, 1, 1],
+];
 
 function bandIndex(progress: number, stages: number) {
   return Math.min(
     stages - 1,
     Math.max(0, Math.floor(progress * stages + 0.001)),
   );
+}
+
+function useChapterScrub(progress: MotionValue<number>, index: number) {
+  const window = OPACITY_WINDOWS[index] ?? OPACITY_WINDOWS[0];
+  const opacityOut: number[] =
+    index === 0 ? [1, 1, 1, 0] : index === 2 ? [0, 1, 1, 1] : [0, 1, 1, 0];
+  const yOut: number[] =
+    index === 0 ? [0, 0, 0, -16] : index === 2 ? [18, 0, 0, 0] : [18, 0, 0, -16];
+  const opacity = useTransform(progress, window, opacityOut);
+  const y = useTransform(progress, window, yOut);
+  return { opacity, y };
 }
 
 export function AboutStory() {
@@ -34,11 +52,24 @@ export function AboutStory() {
     offset: ["start start", "end end"],
   });
 
-  useMotionValueEvent(scrollYProgress, "change", (value) => {
+  const smooth = useSpring(scrollYProgress, {
+    stiffness: 90,
+    damping: 28,
+    restDelta: 0.001,
+  });
+
+  useMotionValueEvent(smooth, "change", (value) => {
     if (reduce) return;
     const next = bandIndex(value, about.arc.length);
     setActiveIndex((prev) => (prev === next ? prev : next));
   });
+
+  const fieldScrub = useChapterScrub(smooth, 0);
+  const policyScrub = useChapterScrub(smooth, 1);
+  const evidenceScrub = useChapterScrub(smooth, 2);
+  const scrubs = [fieldScrub, policyScrub, evidenceScrub];
+
+  const onDark = activeIndex === 1;
 
   const scrollToBand = useCallback(
     (index: number) => {
@@ -49,7 +80,8 @@ export function AboutStory() {
       const rect = track.getBoundingClientRect();
       const trackTop = window.scrollY + rect.top;
       const scrollable = Math.max(1, track.offsetHeight - window.innerHeight);
-      const targetProgress = clamped / stages;
+      // Land mid-band so the chapter is fully visible
+      const targetProgress = (clamped + 0.35) / stages;
       const top = trackTop + targetProgress * scrollable;
       setActiveIndex(clamped);
       window.scrollTo({
@@ -104,22 +136,19 @@ export function AboutStory() {
     );
   }
 
-  const activeTone = CHAPTER_TONES[activeIndex] ?? "mist";
-  const onDark = activeTone === "deep";
-  const activeStage = about.arc[activeIndex] ?? about.arc[0];
-
   return (
     <div
       ref={trackRef}
-      className="relative w-full h-[220vh] sm:h-[300vh]"
+      className="relative w-full min-h-[360vh] sm:min-h-[420vh]"
     >
-      <motion.div
-        className="sticky top-14 z-30 flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden sm:top-16 sm:h-[calc(100dvh-4rem)]"
-        initial={false}
-        animate={{ backgroundColor: CHAPTER_TONE_HEX[activeTone] }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
-      >
-        <div className="mx-auto flex h-full w-full max-w-6xl flex-col px-4 pt-4 pb-4 safe-px sm:px-6 sm:pt-5 sm:pb-5">
+      <div className="sticky top-14 z-30 flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden sm:top-16 sm:h-[calc(100dvh-4rem)]">
+        <ArcAtmosphere progress={smooth} reduceMotion={false} />
+
+        <div className="pointer-events-none absolute inset-0 z-[1] opacity-90">
+          <ArcScrollSvg progress={smooth} reduceMotion={false} />
+        </div>
+
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col px-4 pt-4 pb-4 safe-px sm:px-6 sm:pt-5 sm:pb-5">
           <AssignmentArc
             activeIndex={activeIndex}
             reduceMotion={false}
@@ -128,21 +157,28 @@ export function AboutStory() {
             onDark={onDark}
           />
 
-          <div className="relative mt-4 min-h-0 flex-1 sm:mt-6">
-            <AnimatePresence mode="wait">
-              <AboutChapter
-                key={activeStage.id}
-                stage={activeStage}
-                tone={activeTone}
-                showYears={activeStage.id === "field"}
-                showPillars={activeStage.id === "evidence"}
-                showCtas={activeStage.id === "policy"}
-                variant="stage"
-              />
-            </AnimatePresence>
+          <div className="relative mt-3 min-h-0 flex-1 sm:mt-5">
+            {about.arc.map((stage, index) => {
+              const scrub = scrubs[index]!;
+              return (
+                <AboutChapter
+                  key={stage.id}
+                  stage={stage}
+                  tone={CHAPTER_TONES[index] ?? "mist"}
+                  showYears={stage.id === "field"}
+                  showPillars={stage.id === "evidence"}
+                  showCtas={stage.id === "policy"}
+                  variant="stage"
+                  scrubOpacity={scrub.opacity}
+                  scrubY={scrub.y}
+                  interactive={index === activeIndex}
+                  onDark={index === 1}
+                />
+              );
+            })}
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
