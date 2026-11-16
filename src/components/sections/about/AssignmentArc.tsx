@@ -27,7 +27,7 @@ export function AssignmentArc({
   return (
     <div
       className={cn(
-        embedded ? "relative z-10 shrink-0" : "sticky top-14 z-40 sm:top-16",
+        embedded ? "relative z-10 shrink-0" : "sticky top-0 z-40",
         !embedded && "border-b border-deep/10 bg-paper/90 backdrop-blur-xl",
       )}
       role="navigation"

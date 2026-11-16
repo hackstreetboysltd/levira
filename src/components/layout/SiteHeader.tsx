@@ -61,10 +61,7 @@ export function SiteHeader() {
     <>
       <header
         className={cn(
-          "z-50 bg-transparent safe-pt",
-          isImmersive
-            ? "fixed inset-x-0 top-0"
-            : "sticky top-0",
+          "fixed inset-x-0 top-0 z-50 bg-transparent safe-pt",
           reduce
             ? undefined
             : "transition-transform duration-300 ease-out",
@@ -130,6 +127,11 @@ export function SiteHeader() {
           </div>
         </div>
       </header>
+
+      {/* Reserves header height in flow; scrolls away so page content can cover the top. */}
+      {!isImmersive ? (
+        <div className="h-14 shrink-0 sm:h-16" aria-hidden />
+      ) : null}
 
       <AnimatePresence>
         {open ? (

@@ -13,6 +13,7 @@ import { AssignmentArc } from "@/components/sections/about/AssignmentArc";
 import { AboutChapter } from "@/components/sections/about/AboutChapter";
 import { ArcAtmosphere } from "@/components/sections/about/ArcAtmosphere";
 import { ArcScrollSvg } from "@/components/sections/about/ArcScrollSvg";
+import { ArcScrollUnderlay } from "@/components/sections/about/ArcScrollUnderlay";
 import { about } from "@/content/levira";
 
 const CHAPTER_TONES = ["mist", "deep", "paper"] as const;
@@ -141,14 +142,16 @@ export function AboutStory() {
       ref={trackRef}
       className="relative w-full min-h-[360vh] sm:min-h-[420vh]"
     >
-      <div className="sticky top-14 z-30 flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden sm:top-16 sm:h-[calc(100dvh-4rem)]">
+      <ArcScrollUnderlay />
+
+      <div className="sticky top-0 z-30 flex h-dvh flex-col overflow-hidden">
         <ArcAtmosphere progress={smooth} reduceMotion={false} />
 
         <div className="pointer-events-none absolute inset-0 z-[1] opacity-90">
           <ArcScrollSvg progress={smooth} reduceMotion={false} />
         </div>
 
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col px-4 pt-4 pb-4 safe-px sm:px-6 sm:pt-5 sm:pb-5">
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col px-4 pt-16 pb-4 safe-px sm:px-6 sm:pt-[4.5rem] sm:pb-5">
           <AssignmentArc
             activeIndex={activeIndex}
             reduceMotion={false}

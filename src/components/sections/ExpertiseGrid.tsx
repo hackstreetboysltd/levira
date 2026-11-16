@@ -126,7 +126,6 @@ export function ExpertiseGrid() {
 
   if (!active) return null;
 
-  const indexLabel = String(activeIndex + 1).padStart(2, "0");
   const enterY = direction * 28;
   const exitY = direction * -20;
   const progress = (activeIndex + 1) / expertise.length;
@@ -134,7 +133,7 @@ export function ExpertiseGrid() {
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-[calc(100dvh-3.5rem)] w-full flex-col sm:min-h-[calc(100dvh-4rem)]"
+      className="relative flex min-h-dvh w-full flex-col"
       aria-roledescription="carousel"
       aria-label="Expertise domains"
     >
@@ -164,7 +163,10 @@ export function ExpertiseGrid() {
                   exit={reduce ? { opacity: 0 } : { opacity: 0, y: exitY }}
                   transition={{ duration: reduce ? 0.12 : 0.28, ease }}
                 >
-                  <h1 className="mt-2 max-w-xl font-display text-[clamp(1.5rem,4.2vw,2.75rem)] leading-[1.05] font-bold tracking-tight text-deep text-balance lg:mt-3 lg:text-[clamp(1.85rem,4vw,3.1rem)]">
+                  <h1
+                    id="expertise-active-title"
+                    className="mt-2 max-w-xl font-display text-[clamp(1.5rem,4.2vw,2.75rem)] leading-[1.05] font-bold tracking-tight text-deep text-balance lg:mt-3 lg:text-[clamp(1.85rem,4vw,3.1rem)]"
+                  >
                     {active.title}
                   </h1>
                   <p className="mt-3 max-w-md font-serif-body text-sm leading-relaxed text-deep/80 sm:text-base lg:mt-4 lg:text-lg">
@@ -175,7 +177,7 @@ export function ExpertiseGrid() {
             </aside>
 
             <div className="relative flex min-h-0 flex-col pr-14 sm:justify-center sm:pr-16">
-              <div className="relative overflow-hidden border-y border-deep/10 py-5 sm:py-6">
+              <div className="relative -ml-[max(1rem,env(safe-area-inset-left))] -mr-[calc(3.5rem+max(1rem,env(safe-area-inset-right)))] w-[calc(100%+3.5rem+max(1rem,env(safe-area-inset-left))+max(1rem,env(safe-area-inset-right)))] overflow-hidden border-y border-deep/10 py-5 pl-[max(1rem,env(safe-area-inset-left))] pr-14 sm:ml-0 sm:mr-0 sm:w-auto sm:px-0 sm:pr-0 sm:py-6">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.div
                     key={active.id}
@@ -187,19 +189,7 @@ export function ExpertiseGrid() {
                     exit={reduce ? { opacity: 0 } : { opacity: 0, y: exitY }}
                     transition={{ duration: reduce ? 0.12 : 0.28, ease }}
                   >
-                    <div className="flex min-w-0 items-center gap-3 sm:gap-5">
-                      <span className="font-display text-sm font-semibold tracking-[0.12em] text-cyan tabular-nums sm:text-base">
-                        {indexLabel}
-                      </span>
-                      <h2
-                        id="expertise-active-title"
-                        className="font-display text-xl font-semibold tracking-tight text-deep sm:text-2xl md:text-[1.65rem]"
-                      >
-                        {active.title}
-                      </h2>
-                    </div>
-
-                    <ul className="mt-4 flex flex-col gap-2">
+                    <ul className="flex flex-col gap-2">
                       {active.items.map((item) => (
                         <li
                           key={item}
@@ -220,7 +210,7 @@ export function ExpertiseGrid() {
             </div>
           </div>
 
-          <div className="fixed inset-x-0 bottom-0 z-40 flex w-full justify-center px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] safe-px sm:static sm:z-auto sm:px-0 sm:pt-8 sm:pb-2">
+          <div className="fixed inset-x-0 bottom-0 z-40 flex w-full justify-center px-4 pt-3 pb-[max(2.75rem,env(safe-area-inset-bottom))] safe-px sm:static sm:z-auto sm:px-0 sm:pt-8 sm:pb-2">
             <MagneticButton
               asChild
               size="lg"
@@ -270,19 +260,19 @@ function DomainBar({
 
   return (
     <div
-      className="sticky top-14 z-40 border-b border-deep/10 bg-paper/90 backdrop-blur-xl sm:top-16"
+      className="sticky top-0 z-40 border-b border-deep/10 bg-paper/90 backdrop-blur-xl"
       role="navigation"
       aria-label="Expertise domains"
     >
-      <div className="mx-auto max-w-6xl px-4 py-3 safe-px sm:px-6 sm:py-3.5">
-        <p className="mb-2.5 text-center text-sm font-semibold tracking-[0.18em] text-deep uppercase sm:hidden">
+      <div className="mx-auto max-w-6xl py-3 sm:px-6 sm:py-3.5">
+        <p className="mb-2.5 px-4 text-center text-sm font-semibold tracking-[0.18em] text-deep uppercase safe-px sm:hidden">
           {expertiseIntro.eyebrow}
         </p>
-        <div className="about-arc-track relative h-1.5 w-full rounded-full bg-deep/8">
-          <div className="absolute inset-0 overflow-hidden rounded-full" aria-hidden>
+        <div className="about-arc-track relative h-1.5 w-full rounded-none bg-deep/8 sm:rounded-full">
+          <div className="absolute inset-0 overflow-hidden rounded-none sm:rounded-full" aria-hidden>
             {reduce ? (
               <motion.div
-                className="about-arc-fill h-full w-full rounded-full bg-cyan"
+                className="about-arc-fill h-full w-full rounded-none bg-cyan sm:rounded-full"
                 initial={false}
                 animate={{ scaleX: fill }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
@@ -290,7 +280,7 @@ function DomainBar({
               />
             ) : (
               <motion.div
-                className="about-arc-fill h-full w-full rounded-full bg-cyan"
+                className="about-arc-fill h-full w-full rounded-none bg-cyan sm:rounded-full"
                 initial={false}
                 animate={{ scaleX: fill }}
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}

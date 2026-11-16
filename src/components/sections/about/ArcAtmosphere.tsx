@@ -10,16 +10,18 @@ type ArcAtmosphereProps = {
 
 /**
  * Continuous mist → deep → paper wash plus a rising water plane.
+ * Washes stay translucent so the scrolling WASH underlay reads through evenly.
  * All values scrub from scroll progress (no discrete snaps).
  */
 export function ArcAtmosphere({ progress, reduceMotion }: ArcAtmosphereProps) {
-  const mistOpacity = useTransform(progress, [0, 0.28, 0.42], [1, 1, 0]);
+  // Cap below 1 so the underlay photo stays visible (Evidence-panel opacity).
+  const mistOpacity = useTransform(progress, [0, 0.28, 0.42], [0.72, 0.72, 0]);
   const deepOpacity = useTransform(
     progress,
     [0.22, 0.36, 0.58, 0.72],
-    [0, 1, 1, 0],
+    [0, 0.82, 0.82, 0],
   );
-  const paperOpacity = useTransform(progress, [0.58, 0.72, 1], [0, 1, 1]);
+  const paperOpacity = useTransform(progress, [0.58, 0.72, 1], [0, 0.72, 0.72]);
 
   const waterScale = useTransform(progress, (v) =>
     reduceMotion ? 0.35 : 0.08 + v * 0.78,

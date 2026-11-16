@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Figtree, Source_Serif_4, Syne } from "next/font/google";
 import { PageTransition } from "@/components/layout/PageTransition";
-import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Waterline } from "@/components/layout/Waterline";
@@ -53,7 +52,6 @@ export default function RootLayout({
           <main className="flex flex-1 flex-col">
             <PageTransition>{children}</PageTransition>
           </main>
-          <SiteFooter />
         </ThemeProvider>
       </body>
     </html>
