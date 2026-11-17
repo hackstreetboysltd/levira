@@ -2,7 +2,7 @@ export const site = {
   brand: "LEVIRA",
   tagline: "Research & Consultancy",
   pillars: ["Public Health", "WASH", "Research & MEL", "Policy"] as const,
-  headline: "Healthier systems start with water.",
+  headline: "Healthier systems start with water, sanitation and hygiene.",
   description:
     "We help governments, donors, and implementers strengthen public health, WASH, research, and policy across Africa.",
 };
