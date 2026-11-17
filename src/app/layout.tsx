@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Figtree, Source_Serif_4, Syne } from "next/font/google";
+import { MaintenanceBanner } from "@/components/layout/MaintenanceBanner";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
@@ -49,6 +50,7 @@ export default function RootLayout({
         <ThemeProvider>
           <Waterline />
           <SiteHeader />
+          <MaintenanceBanner />
           <main className="flex flex-1 flex-col">
             <PageTransition>{children}</PageTransition>
           </main>

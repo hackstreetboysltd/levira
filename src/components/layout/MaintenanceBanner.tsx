@@ -4,10 +4,18 @@ import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 
+/** Survives client navigations; resets on full page refresh. */
+let dismissedInSession = false;
+
 export function MaintenanceBanner() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(!dismissedInSession);
   const reduce = useReducedMotion();
   const ease = [0.22, 1, 0.36, 1] as const;
+
+  function dismiss() {
+    dismissedInSession = true;
+    setOpen(false);
+  }
 
   return (
     <AnimatePresence>
@@ -15,24 +23,26 @@ export function MaintenanceBanner() {
         <motion.div
           role="status"
           aria-live="polite"
-          initial={reduce ? false : { y: "100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ duration: 0.35, ease }}
-          className="fixed inset-x-0 bottom-0 z-50 rounded-t-[1.5rem] bg-paper px-4 py-3 text-deep shadow-[0_-8px_28px_rgba(0,0,0,0.18)]"
+          initial={reduce ? false : { opacity: 0, y: -12, x: -8 }}
+          animate={{ opacity: 1, y: 0, x: 0 }}
+          exit={{ opacity: 0, y: -12, x: -8 }}
+          transition={{ duration: 0.3, ease }}
+          className="fixed top-4 left-4 z-[60] w-auto max-w-[calc(100vw-2rem)] rounded-xl bg-paper text-deep shadow-[0_8px_28px_rgba(0,0,0,0.18)] sm:top-5 sm:left-5 sm:max-w-[calc(100vw-2.5rem)]"
         >
-          <div className="flex items-start gap-3">
-            <p className="min-w-0 flex-1 text-center font-sans text-sm leading-snug text-deep">
-              We’re Under Maintenance. Thank you for your patience
-            </p>
+          <div className="flex items-center gap-2.5 p-2.5">
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={dismiss}
               aria-label="Dismiss maintenance notice"
-              className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-deep/60 transition-colors hover:bg-deep/5 hover:text-deep"
+              className="inline-flex shrink-0 items-center justify-center text-primary transition-colors hover:text-primary/80"
             >
               <X className="size-4" strokeWidth={2} aria-hidden />
             </button>
+            <p className="m-0 font-sans text-sm leading-snug whitespace-nowrap text-deep">
+              We’re Under Maintenance.
+              <br />
+              Thank you for your patience
+            </p>
           </div>
         </motion.div>
       ) : null}
