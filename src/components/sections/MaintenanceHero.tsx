@@ -18,24 +18,45 @@ function MaintenanceLoop({ reduce }: { reduce: boolean | null }) {
   const onDotLottieRef = useCallback((instance: DotLottie | null) => {
     if (!instance) return;
 
-    const markReady = () => setReady(true);
+    const start = () => {
+      instance.unfreeze();
+      if (!instance.isPlaying) {
+        instance.play();
+      }
+      setReady(true);
+    };
 
     if (instance.isLoaded) {
-      markReady();
+      start();
       return;
     }
 
-    instance.addEventListener("load", markReady);
+    instance.addEventListener("load", start);
+    instance.addEventListener("ready", start);
   }, []);
 
   return (
     <motion.div
       className="relative mt-8 aspect-square w-full max-w-[18rem] sm:max-w-[20rem]"
-      initial={reduce ? false : { opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={reduce ? false : { y: 10 }}
+      animate={{ y: 0 }}
       transition={{ duration: 0.45, ease, delay: reduce ? 0 : 0.22 }}
       aria-hidden
     >
+      {/* Player stays fully opaque underneath — opacity:0 freezes DotLottie via freezeOnOffscreen. */}
+      {!reduce ? (
+        <div className="absolute inset-0">
+          <DotLottieReact
+            src={LOTTIE_SRC}
+            loop
+            autoplay
+            dotLottieRefCallback={onDotLottieRef}
+            renderConfig={{ freezeOnOffscreen: false }}
+            style={{ width: "100%", height: "100%" }}
+          />
+        </div>
+      ) : null}
+
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={POSTER_SRC}
@@ -46,27 +67,10 @@ function MaintenanceLoop({ reduce }: { reduce: boolean | null }) {
         fetchPriority="high"
         draggable={false}
         className={cn(
-          "absolute inset-0 h-full w-full select-none object-contain transition-opacity duration-300",
+          "pointer-events-none absolute inset-0 z-10 h-full w-full select-none object-contain transition-opacity duration-300",
           !reduce && ready ? "opacity-0" : "opacity-100",
         )}
       />
-
-      {!reduce ? (
-        <div
-          className={cn(
-            "absolute inset-0 transition-opacity duration-300",
-            ready ? "opacity-100" : "opacity-0",
-          )}
-        >
-          <DotLottieReact
-            src={LOTTIE_SRC}
-            loop
-            autoplay
-            dotLottieRefCallback={onDotLottieRef}
-            style={{ width: "100%", height: "100%" }}
-          />
-        </div>
-      ) : null}
     </motion.div>
   );
 }
