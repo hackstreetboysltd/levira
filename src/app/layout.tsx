@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Figtree, Source_Serif_4, Syne } from "next/font/google";
-import { MaintenanceBanner } from "@/components/layout/MaintenanceBanner";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
@@ -34,6 +33,8 @@ export const metadata: Metadata = {
   description: site.description,
 };
 
+const maintenanceMode = process.env.MAINTENANCE_MODE === "true";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -49,8 +50,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col font-sans">
         <ThemeProvider>
           <Waterline />
-          <SiteHeader />
-          <MaintenanceBanner />
+          {!maintenanceMode ? <SiteHeader /> : null}
           <main className="flex flex-1 flex-col">
             <PageTransition>{children}</PageTransition>
           </main>
