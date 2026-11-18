@@ -57,7 +57,7 @@ export default function RootLayout({
           />
           <link
             rel="preload"
-            href="/lottie/under-maintenance.lottie"
+            href="/lottie/under-maintenance.json"
             as="fetch"
             crossOrigin="anonymous"
           />
