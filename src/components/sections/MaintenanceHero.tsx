@@ -54,11 +54,18 @@ export function MaintenanceHero() {
           transition={{ duration: 0.5, ease, delay: reduce ? 0 : 0.12 }}
         >
           This site is under maintenance
-          <br />
-          Thank you for your patience
         </motion.p>
 
         <MaintenanceLoop reduce={reduce} />
+
+        <motion.p
+          className="mt-2 max-w-[20rem] px-1 font-serif-body text-[clamp(1.15rem,3.2vw,1.7rem)] leading-snug text-balance text-paper/90 sm:max-w-xl"
+          initial={reduce ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease, delay: reduce ? 0 : 0.28 }}
+        >
+          Thank you for your patience
+        </motion.p>
       </div>
     </section>
   );
