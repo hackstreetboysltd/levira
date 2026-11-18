@@ -47,6 +47,22 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`${syne.variable} ${sourceSerif.variable} ${figtree.variable} h-full`}
     >
+      {maintenanceMode ? (
+        <head>
+          <link
+            rel="preload"
+            href="/lottie/under-maintenance-poster.png"
+            as="image"
+            type="image/png"
+          />
+          <link
+            rel="preload"
+            href="/lottie/under-maintenance.lottie"
+            as="fetch"
+            crossOrigin="anonymous"
+          />
+        </head>
+      ) : null}
       <body className="flex min-h-full flex-col font-sans">
         <ThemeProvider>
           <Waterline />
